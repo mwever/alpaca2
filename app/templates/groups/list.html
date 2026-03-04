@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Research Groups{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">Research Groups</h4>
+  <a href="/groups/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>New Group
+  </a>
+</div>
+<div class="row g-3">
+  {% for group in groups %}
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h6 class="fw-bold mb-1">
+            <a href="/groups/{{ group.id }}" class="text-decoration-none">{{ group.name }}</a>
+          </h6>
+          {% if group.parent %}
+          <small class="text-muted">↳ {{ group.parent.name }}</small>
+          {% endif %}
+        </div>
+        {% if group.description %}
+        <p class="text-muted small mb-2">{{ group.description | truncate(80) }}</p>
+        {% endif %}
+        <div class="small text-muted">
+          <i class="bi bi-people me-1"></i>{{ group.memberships | length }} member{{ 's' if group.memberships|length != 1 }}
+          {% if group.subgroups %}
+          · <i class="bi bi-diagram-2 me-1"></i>{{ group.subgroups | length }} subgroup{{ 's' if group.subgroups|length != 1 }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-muted text-center py-5">No groups yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Affiliations{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">Affiliations</h4>
+  <a href="/affiliations/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Add Affiliation
+  </a>
+</div>
+
+<form class="d-flex gap-2 mb-3" method="get">
+  <input class="form-control form-control-sm" name="q" placeholder="Search…" value="{{ q }}">
+  <button class="btn btn-sm btn-outline-secondary">Search</button>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th><th>Sigle</th><th>Country</th><th>Authors</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aff in affiliations %}
+        <tr>
+          <td>
+            <a href="/affiliations/{{ aff.id }}" class="text-decoration-none fw-semibold">
+              {% if aff.color %}
+              <span class="me-1" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ aff.color }}"></span>
+              {% endif %}
+              {{ aff.name }}
+            </a>
+          </td>
+          <td><span class="badge bg-secondary">{{ aff.sigle or '—' }}</span></td>
+          <td>{{ aff.country or '—' }}</td>
+          <td>{{ aff.author_affiliations | length }}</td>
+          <td class="text-end">
+            <a href="/affiliations/{{ aff.id }}/edit" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="/affiliations/{{ aff.id }}/delete" class="d-inline"
+                  onsubmit="return confirm('Delete {{ aff.name }}?')">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted text-center py-4">No affiliations found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="mt-3">
+  {% include "partials/pagination.html" %}
+</div>
+{% endblock %}

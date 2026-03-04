@@ -1,0 +1,29 @@
+{% if not deadline_items %}
+  <p class="text-muted small">No upcoming deadlines.</p>
+{% else %}
+  {% for item in deadline_items %}
+  <div class="deadline-item">
+    <div class="fw-semibold" style="font-size:0.8rem">{{ item.edition_label }}</div>
+    {% for dl in item.deadlines %}
+    <div class="d-flex justify-content-between text-muted" style="font-size:0.75rem">
+      <span>{{ dl.name }}</span>
+      <span class="{% if dl.days_left <= 7 %}text-danger fw-bold{% elif dl.days_left <= 14 %}text-warning fw-semibold{% endif %}">
+        {{ dl.date.strftime('%b %d') }}
+        {% if dl.days_left == 0 %}
+          <span class="badge bg-danger">Today</span>
+        {% elif dl.days_left <= 3 %}
+          <span class="badge bg-danger">{{ dl.days_left }}d</span>
+        {% elif dl.days_left <= 7 %}
+          <span class="badge bg-warning text-dark">{{ dl.days_left }}d</span>
+        {% endif %}
+      </span>
+    </div>
+    {% endfor %}
+    {% if item.paper_title %}
+    <div class="text-muted" style="font-size:0.72rem;font-style:italic">
+      <i class="bi bi-file-text me-1"></i>{{ item.paper_title | truncate(40) }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% endif %}

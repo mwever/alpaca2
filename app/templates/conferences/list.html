@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Conferences{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">Conferences</h4>
+  <a href="/conferences/new" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Add Conference
+  </a>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-5">
+    <input class="form-control form-control-sm" name="q" placeholder="Search…" value="{{ q }}">
+  </div>
+  <div class="col-md-3">
+    <select name="rank" class="form-select form-select-sm">
+      <option value="">All ranks</option>
+      {% for r in core_ranks %}
+      <option value="{{ r }}" {% if rank == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-sm btn-outline-secondary">Filter</button>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Abbreviation</th><th>Name</th><th>Rank</th>
+          <th>Editions</th><th>Next Deadline</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for conf in conferences %}
+        {% set latest = conf.editions[0] if conf.editions else none %}
+        <tr>
+          <td>
+            <a href="/conferences/{{ conf.id }}" class="fw-bold text-decoration-none">
+              {{ conf.abbreviation }}
+            </a>
+          </td>
+          <td class="text-muted small">{{ conf.name }}</td>
+          <td>
+            {% if conf.core_rank %}
+            <span class="badge {% if conf.core_rank == 'A*' %}bg-danger{% elif conf.core_rank == 'A' %}bg-warning text-dark{% elif conf.core_rank == 'B' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+              {{ conf.core_rank }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ conf.editions | length }}</td>
+          <td class="small">
+            {% if latest and latest.next_deadline %}
+              {{ latest.next_deadline.strftime('%b %d, %Y') }}
+              {% if latest.id in starred_ids %}
+              <i class="bi bi-star-fill text-warning ms-1"></i>
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end">
+            <a href="/conferences/{{ conf.id }}/edit" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="/conferences/{{ conf.id }}/delete" class="d-inline"
+                  onsubmit="return confirm('Delete {{ conf.abbreviation }}?')">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted text-center py-4">No conferences found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="mt-3">{% include "partials/pagination.html" %}</div>
+{% endblock %}

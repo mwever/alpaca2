@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ author.display_name }}{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/authors">Authors</a></li>
+    <li class="breadcrumb-item active">{{ author.display_name }}</li>
+  </ol>
+</nav>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4 class="fw-bold mb-1">{{ author.full_name }}</h4>
+            {% if author.email %}
+            <a href="mailto:{{ author.email }}" class="text-muted small">
+              <i class="bi bi-envelope me-1"></i>{{ author.email }}
+            </a>
+            {% endif %}
+            {% if author.nationality %}
+            <div class="text-muted small mt-1"><i class="bi bi-flag me-1"></i>{{ author.nationality }}</div>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2 align-items-start">
+            {% if author.google_scholar_id %}
+            <a href="https://scholar.google.com/citations?user={{ author.google_scholar_id }}"
+               target="_blank" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-mortarboard me-1"></i>Scholar
+            </a>
+            {% endif %}
+            <a href="/authors/{{ author.id }}/edit" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+          </div>
+        </div>
+
+        {% if latest_snap %}
+        <div class="row g-2 mt-3">
+          <div class="col-3 text-center">
+            <div class="fs-4 fw-bold text-primary">{{ latest_snap.citations or '—' }}</div>
+            <div class="small text-muted">Citations</div>
+          </div>
+          <div class="col-3 text-center">
+            <div class="fs-4 fw-bold text-primary">{{ latest_snap.h_index or '—' }}</div>
+            <div class="small text-muted">h-index</div>
+          </div>
+          <div class="col-3 text-center">
+            <div class="fs-4 fw-bold text-primary">{{ latest_snap.i10_index or '—' }}</div>
+            <div class="small text-muted">i10-index</div>
+          </div>
+          <div class="col-3 text-center">
+            <div class="fs-4 fw-bold text-primary">{{ latest_snap.current_year_citations or '—' }}</div>
+            <div class="small text-muted">This year</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold small">Affiliations</span>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#addAffForm">
+          <i class="bi bi-plus"></i>
+        </button>
+      </div>
+      <div class="card-body p-2">
+        {% for aa in author.author_affiliations %}
+        <div class="small d-flex justify-content-between align-items-center py-1 px-2 rounded
+                    {% if not aa.end_date %}bg-light{% endif %}">
+          <div>
+            {% if aa.affiliation.color %}
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ aa.affiliation.color }}" class="me-1"></span>
+            {% endif %}
+            <a href="/affiliations/{{ aa.affiliation.id }}" class="text-decoration-none">{{ aa.affiliation.name }}</a>
+            {% if not aa.end_date %}<span class="badge bg-success ms-1" style="font-size:.65rem">current</span>{% endif %}
+          </div>
+          <div class="text-muted">{{ aa.start_date.year if aa.start_date else '?' }}–{{ aa.end_date.year if aa.end_date else 'now' }}</div>
+        </div>
+        {% else %}
+        <div class="text-muted small p-2">No affiliations.</div>
+        {% endfor %}
+      </div>
+      <div class="collapse" id="addAffForm">
+        <div class="card-footer">
+          <form method="post" action="/authors/{{ author.id }}/affiliations/add">
+            <div class="mb-2">
+              <select name="affiliation_id" class="form-select form-select-sm" required>
+                <option value="">— select affiliation —</option>
+                {% for aff in affiliations %}
+                <option value="{{ aff.id }}">{{ aff.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="row g-1 mb-2">
+              <div class="col"><input type="date" name="start_date" class="form-control form-control-sm" placeholder="Start"></div>
+              <div class="col"><input type="date" name="end_date" class="form-control form-control-sm" placeholder="End (leave blank = current)"></div>
+            </div>
+            <button class="btn btn-sm btn-primary w-100">Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if snapshots %}
+<div class="card mb-4">
+  <div class="card-header fw-semibold small">Citation History</div>
+  <div class="card-body">
+    <canvas id="citChart" height="80"></canvas>
+  </div>
+</div>
+{% endif %}
+
+<h5 class="fw-semibold mb-3">Papers ({{ author.paper_authors | length }})</h5>
+<div class="list-group">
+  {% for pa in author.paper_authors %}
+  <a href="/papers/{{ pa.paper.id }}" class="list-group-item list-group-item-action small">
+    {{ pa.paper.title }}
+  </a>
+  {% else %}
+  <div class="text-muted small">No papers yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if snapshots %}
+<script>
+const labels = {{ snapshots | map(attribute='date') | map('string') | list | tojson }};
+const data   = {{ snapshots | map(attribute='citations') | list | tojson }};
+new Chart(document.getElementById('citChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Citations',
+      data,
+      fill: true,
+      tension: 0.3,
+      borderColor: '#1d3a6e',
+      backgroundColor: 'rgba(29,58,110,0.1)',
+    }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 10 } } } }
+});
+</script>
+{% endif %}
+{% endblock %}

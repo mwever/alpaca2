@@ -1,0 +1,532 @@
+{% extends "base.html" %}
+{% block title %}{{ paper.title | truncate(60) }}{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/papers">Papers</a></li>
+    <li class="breadcrumb-item active">{{ paper.title | truncate(50) }}</li>
+  </ol>
+</nav>
+
+<!-- Header card -->
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+      <div class="flex-grow-1 me-3">
+        <h4 class="fw-bold mb-2">{{ paper.title }}</h4>
+        <!-- Authors -->
+        <div class="mb-2">
+          {% for pa in paper.paper_authors %}
+          <span class="author-chip">
+            {% if pa.affiliation %}
+            {% if pa.affiliation.color %}
+            <span class="aff-dot" style="background:{{ pa.affiliation.color }}" title="{{ pa.affiliation.name }}"></span>
+            {% endif %}
+            <a href="/authors/{{ pa.author.id }}" class="text-decoration-none text-dark">{{ pa.author.full_name }}</a>
+            <span class="text-muted" style="font-size:0.7rem">({{ pa.affiliation.sigle or pa.affiliation.name }})</span>
+            {% else %}
+            <a href="/authors/{{ pa.author.id }}" class="text-decoration-none text-dark">{{ pa.author.full_name }}</a>
+            {% endif %}
+          </span>
+          {% endfor %}
+        </div>
+        {% if paper.description %}
+        <p class="text-muted mb-2">{{ paper.description }}</p>
+        {% endif %}
+        <!-- Resources row -->
+        <div class="d-flex flex-wrap gap-1 align-items-center">
+          {% if paper.overleaf_url %}
+          <a href="{{ paper.overleaf_url }}" target="_blank" class="btn btn-sm btn-outline-success" title="Overleaf">
+            <i class="bi bi-file-richtext me-1"></i>Overleaf
+          </a>
+          {% endif %}
+          {% if paper.github_url %}
+          <a href="{{ paper.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark" title="GitHub">
+            <i class="bi bi-github me-1"></i>GitHub
+          </a>
+          {% endif %}
+          {% if paper.google_scholar_paper_id %}
+          <a href="https://scholar.google.com/citations?view_op=view_citation&citation_for_view={{ paper.google_scholar_paper_id }}"
+             target="_blank" class="btn btn-sm btn-outline-secondary" title="Google Scholar">
+            <i class="bi bi-mortarboard me-1"></i>Scholar
+          </a>
+          {% endif %}
+          {% for res in paper.resources %}
+            {% if res.url %}
+            <a href="{{ res.url }}" target="_blank"
+               class="btn btn-sm {% if res.resource_type.value == 'overleaf' %}btn-outline-success{% elif res.resource_type.value == 'github' %}btn-outline-dark{% else %}btn-outline-info{% endif %}">
+              <i class="bi bi-link-45deg me-1"></i>{{ res.label }}
+            </a>
+            {% elif res.file_path %}
+            <a href="/{{ res.file_path }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-file-earmark me-1"></i>{{ res.label }}
+            </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+        <span class="badge bg-{{ status_colors[paper.status] }} fs-6">
+          {{ status_labels[paper.status] }}
+        </span>
+        <div class="d-flex gap-1">
+          <a href="/papers/{{ paper.id }}/edit" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </a>
+          <form method="post" action="/papers/{{ paper.id }}/delete" class="d-inline"
+                onsubmit="return confirm('Delete this paper project?')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="paperTabs">
+  <li class="nav-item">
+    <a class="nav-link" id="tab-activity" data-bs-toggle="tab" href="#pane-activity">
+      <i class="bi bi-check2-square me-1"></i>Activity
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-timeline" data-bs-toggle="tab" href="#pane-timeline">
+      <i class="bi bi-clock-history me-1"></i>Timeline
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="tab-stats" data-bs-toggle="tab" href="#pane-stats">
+      <i class="bi bi-bar-chart me-1"></i>Statistics
+    </a>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- ── Tab 1: Activity ── -->
+  <div class="tab-pane fade" id="pane-activity">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <!-- Todos -->
+        <div class="card mb-3" id="todos">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-semibold small"><i class="bi bi-check2-square me-1"></i>Todo List</span>
+            <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#addTodoForm">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+          <div class="collapse" id="addTodoForm">
+            <div class="card-body border-bottom">
+              <form method="post" action="/papers/{{ paper.id }}/todos">
+                <div class="mb-2">
+                  <input type="text" name="title" class="form-control form-control-sm" placeholder="Todo title…" required>
+                </div>
+                <div class="mb-2">
+                  <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="Details…"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <select name="assigned_to" class="form-select form-select-sm">
+                    <option value="">Unassigned</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-sm btn-primary">Add</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for todo in paper.todos %}
+            <li class="list-group-item small">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <span class="{% if todo.status.value == 'done' %}text-decoration-line-through text-muted{% endif %}">
+                    {{ todo.title }}
+                  </span>
+                  {% if todo.assigned_user %}
+                  <span class="text-muted ms-1">→ {{ todo.assigned_user.username }}</span>
+                  {% endif %}
+                  {% if todo.description %}
+                  <div class="text-muted" style="font-size:.75rem">{{ todo.description }}</div>
+                  {% endif %}
+                </div>
+                <div class="d-flex gap-1 align-items-center text-nowrap">
+                  <form method="post" action="/papers/{{ paper.id }}/todos/{{ todo.id }}/status">
+                    <select name="status" class="form-select form-select-sm py-0" style="font-size:.75rem" onchange="this.form.submit()">
+                      {% for ts in todo_statuses %}
+                      <option value="{{ ts.value }}" {% if todo.status == ts %}selected{% endif %}>{{ ts.value | replace('_',' ') | title }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                  <form method="post" action="/papers/{{ paper.id }}/todos/{{ todo.id }}/delete">
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+                  </form>
+                </div>
+              </div>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted small">No todos.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <!-- Discussion -->
+        <div class="card" id="comments">
+          <div class="card-header fw-semibold small">
+            <i class="bi bi-chat-text me-1"></i>Discussion
+          </div>
+          <div class="card-body">
+            {% for comment, rendered in rendered_comments %}
+            <div class="mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="fw-semibold small text-primary">{{ comment.user.username }}</div>
+                <div class="d-flex gap-1 align-items-center">
+                  <span class="text-muted" style="font-size:.72rem">{{ comment.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                  {% if comment.user_id == current_user.id %}
+                  <form method="post" action="/papers/{{ paper.id }}/comments/{{ comment.id }}/delete">
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size:.7rem"><i class="bi bi-x"></i></button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="mt-1 prose" style="font-size:.85rem">{{ rendered | safe }}</div>
+            </div>
+            {% else %}
+            <div class="text-muted small">No comments yet.</div>
+            {% endfor %}
+          </div>
+          <div class="card-footer">
+            <form method="post" action="/papers/{{ paper.id }}/comments">
+              <textarea name="content" class="form-control form-control-sm mb-2" rows="3"
+                        placeholder="Write a comment (Markdown supported)…" required></textarea>
+              <button class="btn btn-sm btn-primary">Post</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /pane-activity -->
+
+  <!-- ── Tab 2: Timeline ── -->
+  <div class="tab-pane fade" id="pane-timeline">
+    <div class="row g-3">
+      <div class="col-lg-8">
+
+        <!-- Change log -->
+        <div class="card mb-3">
+          <div class="card-header fw-semibold small"><i class="bi bi-clock-history me-1"></i>Change Log</div>
+          <div class="card-body p-0">
+            {% set log_entries = rendered_log | reverse | list %}
+            {% if log_entries %}
+            <ul class="list-group list-group-flush">
+              {% for entry, rendered_note in log_entries %}
+              <li class="list-group-item small">
+                <div class="d-flex gap-2 align-items-start">
+                  <!-- Icon -->
+                  <div class="mt-1 flex-shrink-0">
+                    {% if entry.event_type.value == 'status_change' %}
+                    <i class="bi bi-arrow-right-circle-fill text-primary"></i>
+                    {% elif entry.event_type.value in ['submitted_conference', 'submitted_journal'] %}
+                    <i class="bi bi-send-fill text-success"></i>
+                    {% elif entry.event_type.value == 'resource_added' %}
+                    <i class="bi bi-link-45deg text-info"></i>
+                    {% elif entry.event_type.value == 'resource_removed' %}
+                    <i class="bi bi-link text-secondary"></i>
+                    {% elif entry.event_type.value == 'note' %}
+                    <i class="bi bi-chat-left-text-fill text-warning"></i>
+                    {% endif %}
+                  </div>
+                  <!-- Content -->
+                  <div class="flex-grow-1">
+                    {% if entry.event_type.value == 'status_change' %}
+                      {% if entry.old_status %}
+                      <span class="badge bg-{{ status_colors[entry.old_status] }} me-1">{{ status_labels[entry.old_status] }}</span>
+                      <i class="bi bi-arrow-right text-muted me-1"></i>
+                      {% endif %}
+                      <span class="badge bg-{{ status_colors[entry.new_status] }}">{{ status_labels[entry.new_status] }}</span>
+
+                    {% elif entry.event_type.value == 'submitted_conference' %}
+                    <span class="fw-semibold">Submitted to conference</span>
+                    {% if entry.edition %}
+                    — <a href="/conferences/{{ entry.edition.conference.id }}">{{ entry.edition.conference.abbreviation }} {{ entry.edition.year }}</a>
+                    {% endif %}
+
+                    {% elif entry.event_type.value == 'submitted_journal' %}
+                    <span class="fw-semibold">Submitted to journal</span>
+                    {% if entry.journal %}
+                    — <a href="/journals/{{ entry.journal.id }}">{{ entry.journal.name }}</a>
+                    {% endif %}
+                    {% if entry.special_issue %}
+                    <span class="text-muted">({{ entry.special_issue.title }})</span>
+                    {% endif %}
+
+                    {% elif entry.event_type.value == 'resource_added' %}
+                    <span class="fw-semibold">Resource added</span>
+                    {% if entry.resource %}
+                      — {% if entry.resource.url %}<a href="{{ entry.resource.url }}" target="_blank">{{ entry.resource.label }}</a>
+                      {% elif entry.resource.file_path %}<a href="/{{ entry.resource.file_path }}" target="_blank">{{ entry.resource.label }}</a>
+                      {% else %}{{ entry.resource.label }}{% endif %}
+                    {% elif entry.note %}
+                    — {{ entry.note }}
+                    {% endif %}
+
+                    {% elif entry.event_type.value == 'resource_removed' %}
+                    <span class="fw-semibold text-secondary">Resource removed</span>
+                    {% if entry.note %}— {{ entry.note }}{% endif %}
+
+                    {% elif entry.event_type.value == 'note' %}
+                    <div class="prose" style="font-size:.85rem">{{ rendered_note | safe }}</div>
+                    {% endif %}
+
+                    <div class="text-muted mt-1" style="font-size:.7rem">
+                      {% if entry.creator %}{{ entry.creator.username }} · {% endif %}
+                      {{ entry.created_at.strftime('%b %d, %Y %H:%M') }}
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <div class="p-3 text-muted small">No change log entries yet.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Add note -->
+        <div class="card mb-3">
+          <div class="card-header fw-semibold small"><i class="bi bi-pencil me-1"></i>Add Note</div>
+          <div class="card-body">
+            <form method="post" action="/papers/{{ paper.id }}/log/note">
+              <textarea name="note" class="form-control form-control-sm mb-2" rows="3"
+                        placeholder="Write a note (Markdown supported)…" required></textarea>
+              <button class="btn btn-sm btn-outline-secondary">Add Note</button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-4">
+
+        <!-- Add resource -->
+        <div class="card mb-3">
+          <div class="card-header fw-semibold small"><i class="bi bi-link-45deg me-1"></i>Add Resource</div>
+          <div class="card-body">
+            <form method="post" action="/papers/{{ paper.id }}/resources" enctype="multipart/form-data">
+              <div class="mb-2">
+                <label class="form-label small fw-semibold mb-1">Label</label>
+                <input type="text" name="label" class="form-control form-control-sm" placeholder="e.g. Slides, Preprint…" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold mb-1">URL</label>
+                <input type="url" name="url" class="form-control form-control-sm" placeholder="https://…">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold mb-1">— or upload file —</label>
+                <input type="file" name="file" class="form-control form-control-sm">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold mb-1">Type</label>
+                <select name="resource_type" class="form-select form-select-sm">
+                  {% for rt in resource_types %}
+                  <option value="{{ rt.value }}">{{ rt.value | title }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button class="btn btn-sm btn-info text-white w-100">Add Resource</button>
+            </form>
+          </div>
+          {% if paper.resources %}
+          <ul class="list-group list-group-flush">
+            {% for res in paper.resources %}
+            <li class="list-group-item small d-flex justify-content-between align-items-center">
+              <span>
+                {% if res.url %}
+                <a href="{{ res.url }}" target="_blank">{{ res.label }}</a>
+                {% elif res.file_path %}
+                <a href="/{{ res.file_path }}" target="_blank">{{ res.label }}</a>
+                {% else %}{{ res.label }}{% endif %}
+                <span class="text-muted ms-1">({{ res.resource_type.value }})</span>
+              </span>
+              <form method="post" action="/papers/{{ paper.id }}/resources/{{ res.id }}/delete"
+                    onsubmit="return confirm('Remove this resource?')">
+                <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+
+        <!-- Submit to conference -->
+        <div class="card mb-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-semibold small"><i class="bi bi-send me-1"></i>Submit to Conference</span>
+            <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#confSubForm">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+          <div class="collapse" id="confSubForm">
+            <div class="card-body">
+              <form method="post" action="/papers/{{ paper.id }}/submit/conference">
+                <select name="conference_edition_id" class="form-select form-select-sm mb-2" required>
+                  <option value="">— select edition —</option>
+                  {% for ed in editions %}
+                  <option value="{{ ed.id }}">{{ ed.conference.abbreviation }} {{ ed.year }}</option>
+                  {% endfor %}
+                </select>
+                <input type="date" name="submitted_at" class="form-control form-control-sm mb-2" value="{{ today }}">
+                <button class="btn btn-sm btn-primary w-100">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit to journal -->
+        <div class="card mb-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-semibold small"><i class="bi bi-journal me-1"></i>Submit to Journal</span>
+            <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#journalSubForm">
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+          <div class="collapse" id="journalSubForm">
+            <div class="card-body">
+              <form method="post" action="/papers/{{ paper.id }}/submit/journal">
+                <select name="journal_id" class="form-select form-select-sm mb-2" required>
+                  <option value="">— select journal —</option>
+                  {% for j in journals %}
+                  <option value="{{ j.id }}">{{ j.name }}</option>
+                  {% endfor %}
+                </select>
+                <input type="date" name="submitted_at" class="form-control form-control-sm mb-2" value="{{ today }}">
+                <button class="btn btn-sm btn-primary w-100">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /pane-timeline -->
+
+  <!-- ── Tab 3: Statistics ── -->
+  <div class="tab-pane fade" id="pane-stats">
+    {% if gs_snapshots %}
+    {% set latest_snap = gs_snapshots[-1] %}
+    {% set first_snap = gs_snapshots[0] %}
+    <div class="row g-3 mb-3">
+      <div class="col-auto">
+        <div class="card text-center px-4 py-3">
+          <div class="fs-1 fw-bold text-primary lh-1">{{ latest_snap.num_citations or 0 }}</div>
+          <div class="text-muted small mt-1">Total citations</div>
+        </div>
+      </div>
+      {% if latest_snap.title %}
+      <div class="col">
+        <div class="card h-100 px-3 py-3">
+          <div class="fw-semibold">{{ latest_snap.title }}</div>
+          <div class="text-muted small">{{ latest_snap.venue or '' }}{% if latest_snap.year %} · {{ latest_snap.year }}{% endif %}</div>
+          <div class="text-muted small">{{ latest_snap.author_list or '' }}</div>
+          <div class="text-muted small mt-1">
+            <i class="bi bi-calendar3 me-1"></i>
+            Data from {{ first_snap.date }} to {{ latest_snap.date }}
+            ({{ gs_snapshots | length }} snapshots)
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-header fw-semibold small"><i class="bi bi-graph-up me-1"></i>Citation History</div>
+      <div class="card-body">
+        <canvas id="citeChartFull" style="max-height:350px"></canvas>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-muted p-3">
+      {% if paper.google_scholar_paper_id %}
+      No citation snapshots found yet for this paper.
+      {% else %}
+      No Google Scholar paper ID linked. Add one via <a href="/papers/{{ paper.id }}/edit">Edit</a>.
+      {% endif %}
+    </div>
+    {% endif %}
+  </div><!-- /pane-stats -->
+
+</div><!-- /tab-content -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Activate tab from URL param
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab') || 'activity';
+  const el = document.getElementById('tab-' + tab);
+  if (el) { bootstrap.Tab.getOrCreateInstance(el).show(); }
+  else { bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-activity')).show(); }
+
+  // Persist tab on change
+  document.querySelectorAll('#paperTabs .nav-link').forEach(function(link) {
+    link.addEventListener('shown.bs.tab', function(e) {
+      const id = e.target.id.replace('tab-', '');
+      const url = new URL(window.location);
+      url.searchParams.set('tab', id);
+      window.history.replaceState({}, '', url);
+    });
+  });
+})();
+</script>
+
+{% if gs_snapshots %}
+<script>
+document.getElementById('tab-stats').addEventListener('shown.bs.tab', function () {
+  if (window._citeChartFull) return;
+  const snapLabels = {{ gs_snapshots | map(attribute='date') | map('string') | list | tojson }};
+  const snapData   = {{ gs_snapshots | map(attribute='num_citations') | list | tojson }};
+  window._citeChartFull = new Chart(document.getElementById('citeChartFull'), {
+    type: 'line',
+    data: {
+      labels: snapLabels,
+      datasets: [{
+        label: 'Citations',
+        data: snapData,
+        borderColor: '#1d3a6e',
+        fill: true,
+        backgroundColor: 'rgba(29,58,110,0.1)',
+        tension: 0.4,
+        pointRadius: snapLabels.length > 60 ? 0 : 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ctx => ctx[0].label,
+            label: ctx => ctx.parsed.y + ' citations'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12 } },
+        y: { beginAtZero: true }
+      }
+    }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

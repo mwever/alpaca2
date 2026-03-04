@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">Dashboard</h4>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card text-bg-primary">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-earmark-text fs-2 me-3 opacity-75"></i>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.papers }}</div>
+            <div class="small opacity-75">Paper Projects</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-success">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check-circle fs-2 me-3 opacity-75"></i>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.accepted }}</div>
+            <div class="small opacity-75">Accepted / Published</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-warning">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-send fs-2 me-3 opacity-75"></i>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.submitted }}</div>
+            <div class="small opacity-75">Under Submission</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-info">
+      <div class="card-body py-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-people fs-2 me-3 opacity-75"></i>
+          <div>
+            <div class="fs-4 fw-bold">{{ stats.authors }}</div>
+            <div class="small opacity-75">Authors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent papers -->
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Recent Papers</span>
+        <a href="/papers" class="btn btn-sm btn-outline-primary">View all</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for paper in recent_papers %}
+        <a href="/papers/{{ paper.id }}" class="list-group-item list-group-item-action">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1 me-2">
+              <div class="fw-semibold">{{ paper.title | truncate(80) }}</div>
+              <div class="small text-muted">
+                {% for pa in paper.paper_authors[:3] %}
+                  {{ pa.author.last_name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+                {% if paper.paper_authors | length > 3 %} et al.{% endif %}
+              </div>
+            </div>
+            <span class="badge bg-{{ status_colors[paper.status] }} text-nowrap">
+              {{ status_labels[paper.status] }}
+            </span>
+          </div>
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted small">No papers yet. <a href="/papers/new">Create one</a>.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">My Groups</span>
+        <a href="/groups" class="btn btn-sm btn-outline-secondary">View all</a>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for group in my_groups %}
+        <a href="/groups/{{ group.id }}" class="list-group-item list-group-item-action small">
+          <i class="bi bi-collection me-1 text-muted"></i>{{ group.name }}
+        </a>
+        {% else %}
+        <div class="list-group-item text-muted small">Not in any group yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

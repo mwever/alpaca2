@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if author else 'New' }} Author{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/authors">Authors</a></li>
+    <li class="breadcrumb-item active">{{ 'Edit' if author else 'New' }}</li>
+  </ol>
+</nav>
+
+<div class="card" style="max-width:560px">
+  <div class="card-body">
+    <h5 class="card-title fw-bold mb-4">{{ 'Edit Author' if author else 'New Author' }}</h5>
+    <form method="post" action="{{ action }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Last Name *</label>
+          <input type="text" name="last_name" class="form-control" required
+                 value="{{ author.last_name if author else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Given Name *</label>
+          <input type="text" name="given_name" class="form-control" required
+                 value="{{ author.given_name if author else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Email</label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ author.email or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Nationality</label>
+          <input type="text" name="nationality" class="form-control"
+                 value="{{ author.nationality or '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label small fw-semibold">Google Scholar ID</label>
+          <input type="text" name="google_scholar_id" class="form-control"
+                 value="{{ author.google_scholar_id or '' }}"
+                 placeholder="e.g. aBcDeFgHiJk">
+          <div class="form-text">The user ID from scholar.google.com/citations?user=…</div>
+        </div>
+        {% if not author %}
+        <div class="col-md-8">
+          <label class="form-label small fw-semibold">Initial Affiliation</label>
+          <select name="affiliation_id" class="form-select">
+            <option value="">— none —</option>
+            {% for aff in affiliations %}
+            <option value="{{ aff.id }}">{{ aff.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Start Date</label>
+          <input type="date" name="aff_start" class="form-control">
+        </div>
+        {% endif %}
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/authors{% if author %}/{{ author.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

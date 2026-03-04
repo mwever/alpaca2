@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/groups">Groups</a></li>
+    <li class="breadcrumb-item active">{{ group.name }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">{{ group.name }}</h4>
+    {% if group.parent %}<div class="text-muted small">Subgroup of <a href="/groups/{{ group.parent_group_id }}">{{ group.parent.name }}</a></div>{% endif %}
+    {% if group.description %}<p class="text-muted mt-1">{{ group.description }}</p>{% endif %}
+  </div>
+  {% if is_admin %}
+  <div class="d-flex gap-2">
+    <a href="/groups/{{ group.id }}/edit" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Edit
+    </a>
+    <form method="post" action="/groups/{{ group.id }}/delete"
+          onsubmit="return confirm('Delete this group?')">
+      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3">
+  <!-- Members -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold small">Members</span>
+        {% if is_admin %}
+        <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#addMemberForm">
+          <i class="bi bi-plus"></i>
+        </button>
+        {% endif %}
+      </div>
+      {% if is_admin %}
+      <div class="collapse" id="addMemberForm">
+        <div class="card-body border-bottom">
+          <form method="post" action="/groups/{{ group.id }}/members/add">
+            <select name="user_id" class="form-select form-select-sm mb-2" required>
+              <option value="">— select user —</option>
+              {% for u in all_users %}
+              <option value="{{ u.id }}">{{ u.username }}</option>
+              {% endfor %}
+            </select>
+            <select name="role" class="form-select form-select-sm mb-2">
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+            <button class="btn btn-sm btn-primary w-100">Add</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+      <ul class="list-group list-group-flush">
+        {% for m in group.memberships %}
+        <li class="list-group-item small d-flex justify-content-between align-items-center">
+          <span>
+            {{ m.user.username }}
+            {% if m.role.value == 'admin' %}<span class="badge bg-warning text-dark ms-1">admin</span>{% endif %}
+          </span>
+          {% if is_admin and m.user_id != current_user.id %}
+          <form method="post" action="/groups/{{ group.id }}/members/{{ m.user_id }}/remove">
+            <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if group.subgroups %}
+    <div class="card mt-3">
+      <div class="card-header fw-semibold small">Subgroups</div>
+      <ul class="list-group list-group-flush">
+        {% for sg in group.subgroups %}
+        <li class="list-group-item small">
+          <a href="/groups/{{ sg.id }}">{{ sg.name }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Papers feed -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold small">Shared Papers</span>
+        {% if is_admin %}
+        <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#addPaperForm">
+          <i class="bi bi-plus"></i>
+        </button>
+        {% endif %}
+      </div>
+      {% if is_admin %}
+      <div class="collapse" id="addPaperForm">
+        <div class="card-body border-bottom">
+          <form method="post" action="/groups/{{ group.id }}/papers/add" class="d-flex gap-2">
+            <select name="paper_id" class="form-select form-select-sm" required>
+              <option value="">— select paper —</option>
+              {% for p in all_papers %}
+              <option value="{{ p.id }}">{{ p.title | truncate(60) }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-sm btn-primary">Share</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+      <div class="list-group list-group-flush">
+        {% for share in group.paper_shares %}
+        {% set paper = share.paper %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <a href="/papers/{{ paper.id }}" class="fw-semibold text-decoration-none">
+                {{ paper.title | truncate(70) }}
+              </a>
+              <div class="small text-muted">
+                {% for pa in paper.paper_authors[:3] %}{{ pa.author.last_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                {% if paper.paper_authors|length > 3 %} et al.{% endif %}
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <span class="badge bg-{{ status_colors[paper.status] }}">{{ status_labels[paper.status] }}</span>
+              {% if is_admin %}
+              <form method="post" action="/groups/{{ group.id }}/papers/{{ paper.id }}/remove">
+                <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="list-group-item text-muted small">No papers shared with this group yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

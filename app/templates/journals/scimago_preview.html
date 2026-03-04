@@ -1,0 +1,63 @@
+<div class="card border-info">
+  <div class="card-header bg-info bg-opacity-10 fw-semibold small d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-bar-chart me-1"></i>ScimagoJR data for "{{ info.title }}"</span>
+    {% if info.sjr_year %}<span class="text-muted fw-normal">({{ info.sjr_year }})</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-auto text-center">
+        <div class="fs-4 fw-bold text-primary">{{ info.sjr if info.sjr else '—' }}</div>
+        <div class="small text-muted">SJR</div>
+      </div>
+      <div class="col-auto text-center">
+        <div class="fs-4 fw-bold">
+          {% if info.best_quartile %}
+          <span class="badge {% if info.best_quartile == 'Q1' %}bg-success{% elif info.best_quartile == 'Q2' %}bg-primary{% elif info.best_quartile == 'Q3' %}bg-warning text-dark{% else %}bg-secondary{% endif %} fs-6">
+            {{ info.best_quartile }}
+          </span>
+          {% else %}—{% endif %}
+        </div>
+        <div class="small text-muted">Best Quartile</div>
+      </div>
+      {% if info.h_index %}
+      <div class="col-auto text-center">
+        <div class="fs-4 fw-bold text-secondary">{{ info.h_index }}</div>
+        <div class="small text-muted">H-index</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if info.categories %}
+    <div class="mb-3">
+      <div class="small fw-semibold text-muted mb-1">Quartile by Category ({{ info.sjr_year }})</div>
+      <div class="d-flex flex-wrap gap-1">
+        {% for cat, q in info.categories %}
+        <span class="badge {% if q == 'Q1' %}bg-success{% elif q == 'Q2' %}bg-primary{% elif q == 'Q3' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+          {{ q }} — {{ cat }}
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/journals/{{ journal.id }}/scimago/apply" class="d-flex gap-2 align-items-end flex-wrap">
+      <div>
+        <label class="form-label small fw-semibold mb-1">SJR to apply</label>
+        <input type="text" name="sjr" class="form-control form-control-sm" style="width:100px"
+               value="{{ info.sjr or '' }}">
+      </div>
+      <div>
+        <label class="form-label small fw-semibold mb-1">Quartile to apply</label>
+        <select name="best_quartile" class="form-select form-select-sm" style="width:90px">
+          <option value="">—</option>
+          {% for q in ['Q1','Q2','Q3','Q4'] %}
+          <option value="{{ q }}" {% if info.best_quartile == q %}selected{% endif %}>{{ q }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-sm btn-info text-white">
+        <i class="bi bi-check-lg me-1"></i>Apply to Journal
+      </button>
+    </form>
+  </div>
+</div>

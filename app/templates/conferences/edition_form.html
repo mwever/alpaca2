@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}New Edition — {{ conference.abbreviation }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/conferences">Conferences</a></li>
+    <li class="breadcrumb-item"><a href="/conferences/{{ conference.id }}">{{ conference.abbreviation }}</a></li>
+    <li class="breadcrumb-item active">New Edition</li>
+  </ol>
+</nav>
+<div class="card" style="max-width:640px">
+  <div class="card-body">
+    <h5 class="fw-bold mb-4">Add Edition — {{ conference.abbreviation }}</h5>
+    <form method="post" action="{{ action }}">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Year *</label>
+          <input type="number" name="year" class="form-control" required
+                 value="{{ edition.year if edition else '' }}" placeholder="2026">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label small fw-semibold">Location</label>
+          <input type="text" name="location" class="form-control"
+                 value="{{ edition.location or '' if edition else '' }}" placeholder="Vienna, Austria">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Start Date</label>
+          <input type="date" name="start_date" class="form-control"
+                 value="{{ edition.start_date if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">End Date</label>
+          <input type="date" name="end_date" class="form-control"
+                 value="{{ edition.end_date if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">WikiCFP ID</label>
+          <input type="text" name="wikicfp_id" class="form-control"
+                 value="{{ edition.wikicfp_id or '' if edition else '' }}">
+        </div>
+      </div>
+      <hr class="my-3">
+      <h6 class="fw-semibold text-muted mb-3">Call for Papers Dates</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Abstract Deadline</label>
+          <input type="date" name="abstract_deadline" class="form-control"
+                 value="{{ edition.abstract_deadline if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Full Paper Deadline</label>
+          <input type="date" name="full_paper_deadline" class="form-control"
+                 value="{{ edition.full_paper_deadline if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Rebuttal Start</label>
+          <input type="date" name="rebuttal_start" class="form-control"
+                 value="{{ edition.rebuttal_start if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Rebuttal End</label>
+          <input type="date" name="rebuttal_end" class="form-control"
+                 value="{{ edition.rebuttal_end if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Notification Date</label>
+          <input type="date" name="notification_date" class="form-control"
+                 value="{{ edition.notification_date if edition else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Camera Ready Deadline</label>
+          <input type="date" name="camera_ready_deadline" class="form-control"
+                 value="{{ edition.camera_ready_deadline if edition else '' }}">
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save Edition</button>
+        <a href="/conferences/{{ conference.id }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

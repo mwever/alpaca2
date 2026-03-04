@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Scholar History — {{ author.display_name }}{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/authors">Authors</a></li>
+    <li class="breadcrumb-item"><a href="/authors/{{ author.id }}">{{ author.display_name }}</a></li>
+    <li class="breadcrumb-item active">Scholar History</li>
+  </ol>
+</nav>
+
+<h4 class="fw-bold mb-4">
+  <i class="bi bi-mortarboard me-2"></i>Scholar History — {{ author.full_name }}
+</h4>
+
+{% if snapshots %}
+<div class="card mb-4">
+  <div class="card-body">
+    <canvas id="historyChart" height="100"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th><th>Citations</th><th>h-index</th><th>i10-index</th>
+          <th>This Year</th><th>Publications</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for snap in snapshots %}
+        <tr>
+          <td>{{ snap.date }}</td>
+          <td>{{ snap.citations or '—' }}</td>
+          <td>{{ snap.h_index or '—' }}</td>
+          <td>{{ snap.i10_index or '—' }}</td>
+          <td>{{ snap.current_year_citations or '—' }}</td>
+          <td>{{ snap.gs_entries or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No scholar data available yet for this author.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if snapshots %}
+<script>
+const snaps = {{ snapshots | reverse | list | tojson(default=str) }};
+// snaps is a list of objects — we'll extract what we need
+const labels   = snaps.map(s => s.date);
+const cits     = snaps.map(s => s.citations);
+const hIdx     = snaps.map(s => s.h_index);
+const i10      = snaps.map(s => s.i10_index);
+new Chart(document.getElementById('historyChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Citations', data: cits, borderColor: '#1d3a6e', backgroundColor: 'rgba(29,58,110,0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+      { label: 'h-index',   data: hIdx, borderColor: '#198754', tension: 0.3, yAxisID: 'y2' },
+      { label: 'i10-index', data: i10,  borderColor: '#fd7e14', tension: 0.3, yAxisID: 'y2' },
+    ]
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: { ticks: { maxTicksLimit: 12 } },
+      y: { position: 'left', title: { display: true, text: 'Citations' } },
+      y2: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Index' } },
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

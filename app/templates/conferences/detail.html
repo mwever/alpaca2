@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ conference.abbreviation }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/conferences">Conferences</a></li>
+    <li class="breadcrumb-item active">{{ conference.abbreviation }}</li>
+  </ol>
+</nav>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h4 class="fw-bold mb-1">{{ conference.name }}
+          <span class="text-muted fw-normal fs-6">({{ conference.abbreviation }})</span>
+        </h4>
+        {% if conference.core_rank %}
+        <span class="badge {% if conference.core_rank == 'A*' %}bg-danger{% elif conference.core_rank == 'A' %}bg-warning text-dark{% elif conference.core_rank == 'B' %}bg-info text-dark{% else %}bg-secondary{% endif %} me-2">
+          CORE {{ conference.core_rank }}
+        </span>
+        {% endif %}
+        {% if conference.website %}
+        <a href="{{ conference.website }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-link-45deg me-1"></i>Website
+        </a>
+        {% endif %}
+        {% if conference.wikicfp_series_id %}
+        {% set wcfp_url = "http://www.wikicfp.com/cfp/program?id=" ~ conference.wikicfp_series_id
+                          if conference.wikicfp_series_id | int(-1) >= 0
+                          else "http://www.wikicfp.com/cfp/call?conference=" ~ conference.wikicfp_series_id %}
+        <a href="{{ wcfp_url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-box-arrow-up-right me-1"></i>WikiCFP
+        </a>
+        {% endif %}
+      </div>
+      <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="/conferences/{{ conference.id }}/editions/new" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus me-1"></i>Add Edition
+        </a>
+        {% if conference.wikicfp_series_id %}
+        <button class="btn btn-sm btn-outline-info"
+                hx-get="/conferences/{{ conference.id }}/wikicfp"
+                hx-target="#wikicfp-section"
+                hx-swap="innerHTML"
+                hx-indicator="#wikicfp-spinner">
+          <span id="wikicfp-spinner" class="htmx-indicator spinner-border spinner-border-sm me-1" role="status"></span>
+          <i class="bi bi-cloud-download me-1"></i>Fetch from WikiCFP
+        </button>
+        {% endif %}
+        <a href="/conferences/{{ conference.id }}/edit" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# WikiCFP fetch results land here #}
+<div id="wikicfp-section" class="mb-4"></div>
+
+<h5 class="fw-semibold mb-3">Editions</h5>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Year</th><th>Dates</th><th>Location</th>
+        <th>Abstract</th><th>Full Paper</th><th>Rebuttal</th>
+        <th>Notification</th><th>Camera Ready</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ed in conference.editions %}
+      <tr>
+        <td class="fw-semibold">
+          {{ conference.abbreviation }} {{ ed.year }}
+          {% if ed.id in starred_ids %}
+          <i class="bi bi-star-fill text-warning ms-1"></i>
+          {% endif %}
+          {% if ed.wikicfp_id %}
+          <a href="http://www.wikicfp.com/cfp/servlet/event.showcfp?eventid={{ ed.wikicfp_id }}"
+             target="_blank" class="ms-1 text-muted small" title="WikiCFP">
+            <i class="bi bi-box-arrow-up-right"></i>
+          </a>
+          {% endif %}
+        </td>
+        <td class="small text-nowrap">
+          {% if ed.start_date and ed.end_date %}
+            {{ ed.start_date.strftime('%b %d') }}–{{ ed.end_date.strftime('%b %d, %Y') }}
+          {% elif ed.start_date %}
+            {{ ed.start_date.strftime('%b %d, %Y') }}
+          {% else %}—{% endif %}
+        </td>
+        <td class="small text-muted">{{ ed.location or '—' }}</td>
+        <td class="small">{{ ed.abstract_deadline.strftime('%b %d') if ed.abstract_deadline else '—' }}</td>
+        <td class="small {% if ed.full_paper_deadline and ed.full_paper_deadline >= today %}fw-semibold text-danger{% endif %}">
+          {{ ed.full_paper_deadline.strftime('%b %d, %Y') if ed.full_paper_deadline else '—' }}
+        </td>
+        <td class="small">
+          {% if ed.rebuttal_start %}{{ ed.rebuttal_start.strftime('%b %d') }}–{{ ed.rebuttal_end.strftime('%b %d') if ed.rebuttal_end else '?' }}{% else %}—{% endif %}
+        </td>
+        <td class="small">{{ ed.notification_date.strftime('%b %d, %Y') if ed.notification_date else '—' }}</td>
+        <td class="small">{{ ed.camera_ready_deadline.strftime('%b %d, %Y') if ed.camera_ready_deadline else '—' }}</td>
+        <td class="text-end text-nowrap">
+          <form method="post" action="/conferences/{{ conference.id }}/editions/{{ ed.id }}/star" class="d-inline">
+            <button class="btn btn-sm {% if ed.id in starred_ids %}btn-warning{% else %}btn-outline-secondary{% endif %}" title="Star">
+              <i class="bi bi-star{% if ed.id in starred_ids %}-fill{% endif %}"></i>
+            </button>
+          </form>
+          <form method="post" action="/conferences/{{ conference.id }}/editions/{{ ed.id }}/delete"
+                class="d-inline" onsubmit="return confirm('Delete this edition?')">
+            <button class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-muted text-center py-3">No editions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

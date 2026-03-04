@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ affiliation.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/affiliations">Affiliations</a></li>
+    <li class="breadcrumb-item active">{{ affiliation.name }}</li>
+  </ol>
+</nav>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h4 class="fw-bold mb-1">
+          {% if affiliation.color %}
+          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:{{ affiliation.color }};vertical-align:middle" class="me-2"></span>
+          {% endif %}
+          {{ affiliation.name }}
+          {% if affiliation.sigle %}
+          <span class="badge bg-secondary ms-2">{{ affiliation.sigle }}</span>
+          {% endif %}
+        </h4>
+        {% if affiliation.country %}
+        <div class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ affiliation.country }}</div>
+        {% endif %}
+        {% if affiliation.website %}
+        <a href="{{ affiliation.website }}" target="_blank" class="small">
+          <i class="bi bi-link-45deg me-1"></i>{{ affiliation.website }}
+        </a>
+        {% endif %}
+        {% if affiliation.description %}
+        <p class="mt-2 text-muted small">{{ affiliation.description }}</p>
+        {% endif %}
+      </div>
+      <a href="/affiliations/{{ affiliation.id }}/edit" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil me-1"></i>Edit
+      </a>
+    </div>
+  </div>
+</div>
+
+<h5 class="fw-semibold mb-3">Authors at this affiliation</h5>
+<div class="row g-2">
+  {% for aa in affiliation.author_affiliations %}
+  <div class="col-md-4">
+    <div class="card card-body py-2 px-3 small">
+      <a href="/authors/{{ aa.author.id }}" class="fw-semibold text-decoration-none">
+        {{ aa.author.display_name }}
+      </a>
+      <div class="text-muted">
+        {{ aa.start_date or '?' }} – {{ aa.end_date or 'present' }}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-muted small">No authors linked.</div>
+  {% endfor %}
+</div>
+{% endblock %}

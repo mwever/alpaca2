@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if paper else 'New' }} Paper{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/papers">Papers</a></li>
+    <li class="breadcrumb-item active">{{ 'Edit' if paper else 'New' }}</li>
+  </ol>
+</nav>
+<div class="card" style="max-width:720px">
+  <div class="card-body">
+    <h5 class="fw-bold mb-4">{{ 'Edit Paper Project' if paper else 'New Paper Project' }}</h5>
+    <form method="post" action="{{ action }}">
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Title *</label>
+        <input type="text" name="title" class="form-control" required
+               value="{{ paper.title if paper else '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Status</label>
+        <select name="status" class="form-select">
+          {% for s in all_statuses %}
+          <option value="{{ s.value }}"
+                  {% if paper and paper.status == s %}selected{% elif not paper and s.value == 'planned' %}selected{% endif %}>
+            {{ status_labels[s] }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Description</label>
+        <textarea name="description" class="form-control" rows="3">{{ paper.description or '' if paper else '' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Authors</label>
+        <input type="text" name="authors_raw" class="form-control"
+               value="{{ author_str or '' }}"
+               placeholder="Doe, John; Smith, Jane Marie; Brown, Bob">
+        <div class="form-text">Semicolon-separated: <code>Last, Given; Last2, Given2</code>. Existing authors are matched by name.</div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Overleaf URL</label>
+          <input type="url" name="overleaf_url" class="form-control"
+                 value="{{ paper.overleaf_url or '' if paper else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">GitHub URL</label>
+          <input type="url" name="github_url" class="form-control"
+                 value="{{ paper.github_url or '' if paper else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small fw-semibold">Google Scholar Paper ID</label>
+          <input type="text" name="google_scholar_paper_id" class="form-control"
+                 value="{{ paper.google_scholar_paper_id or '' if paper else '' }}"
+                 placeholder="e.g. u-x6o8ySG0sC">
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/papers{% if paper %}/{{ paper.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

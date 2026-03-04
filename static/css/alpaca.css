@@ -1,0 +1,133 @@
+/* ── Alpaca custom styles ──────────────────────────────────────────── */
+:root {
+  --sidebar-width: 220px;
+  --deadlines-width: 260px;
+  --alpaca-blue: #1d3a6e;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f6fa;
+}
+
+/* ── Layout ── */
+#layout {
+  display: flex;
+  flex: 1;
+}
+
+#sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--alpaca-blue);
+  min-height: calc(100vh - 56px);
+}
+
+#sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  font-size: 0.9rem;
+}
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+#sidebar .nav-link i {
+  width: 1.25rem;
+  text-align: center;
+}
+
+#main-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+#deadlines-sidebar {
+  width: var(--deadlines-width);
+  min-width: var(--deadlines-width);
+  background: #fff;
+  border-left: 1px solid #dee2e6;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 56px);
+}
+
+/* ── Navbar ── */
+.navbar {
+  background: var(--alpaca-blue) !important;
+}
+
+/* ── Cards ── */
+.paper-card {
+  transition: box-shadow 0.15s;
+}
+.paper-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Deadline badge ── */
+.deadline-item {
+  font-size: 0.8rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0.4rem 0;
+}
+.deadline-item:last-child {
+  border-bottom: none;
+}
+
+/* ── HTMX loading indicator ── */
+.htmx-indicator {
+  display: none;
+}
+.htmx-request .htmx-indicator {
+  display: inline-block;
+}
+
+/* ── Modal form helpers ── */
+#modal-container .modal-body {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+/* ── Flash messages ── */
+#flash-container {
+  position: fixed;
+  top: 4.5rem;
+  right: 1rem;
+  z-index: 9999;
+  min-width: 300px;
+}
+
+/* ── Status badges ── */
+.status-planned     { background: #6c757d; }
+.status-wip         { background: #0dcaf0; color: #000; }
+.status-submitted   { background: #0d6efd; }
+.status-under-review{ background: #ffc107; color: #000; }
+.status-major       { background: #dc3545; }
+.status-minor       { background: #fd7e14; }
+.status-accepted    { background: #198754; }
+.status-published   { background: #20c997; }
+.status-rejected    { background: #343a40; }
+
+/* ── Author chips ── */
+.author-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #e9ecef;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  margin: 2px;
+  gap: 4px;
+}
+.author-chip .aff-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}

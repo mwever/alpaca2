@@ -1,0 +1,67 @@
+{# HTMX partial — WikiCFP edition preview + import form #}
+<div class="card border-info">
+  <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+    <span class="fw-semibold"><i class="bi bi-cloud-download me-2"></i>WikiCFP Editions</span>
+    <button type="button" class="btn-close btn-sm" onclick="document.getElementById('wikicfp-section').innerHTML=''"></button>
+  </div>
+  <div class="card-body p-0">
+    <form method="post" action="/conferences/{{ conf_id }}/wikicfp/import">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:2rem">
+                <input type="checkbox" class="form-check-input" id="wikicfp-check-all"
+                       onchange="document.querySelectorAll('.wikicfp-cb').forEach(cb => cb.checked = this.checked)">
+              </th>
+              <th>Edition</th>
+              <th>When</th>
+              <th>Where</th>
+              <th>Deadline (from listing)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ed in editions %}
+            {% set already_by_id = ed.event_id in existing_wikicfp_ids %}
+            {% set already_by_year = ed.year in existing_years %}
+            <tr class="{% if already_by_id %}table-success{% elif already_by_year %}table-warning{% endif %}">
+              <td>
+                <input type="checkbox" name="event_ids" value="{{ ed.event_id }}"
+                       class="form-check-input wikicfp-cb"
+                       {% if not already_by_id %}checked{% endif %}>
+              </td>
+              <td class="fw-semibold">
+                <a href="http://www.wikicfp.com/cfp/servlet/event.showcfp?eventid={{ ed.event_id }}"
+                   target="_blank" class="text-decoration-none">
+                  {{ ed.title }}
+                </a>
+              </td>
+              <td class="small text-muted">{{ ed.when_text or '—' }}</td>
+              <td class="small text-muted">{{ ed.where_text or '—' }}</td>
+              <td class="small">{{ ed.deadline_text or '—' }}</td>
+              <td class="small">
+                {% if already_by_id %}
+                  <span class="badge bg-success">Imported</span>
+                {% elif already_by_year %}
+                  <span class="badge bg-warning text-dark">Year exists</span>
+                {% else %}
+                  <span class="badge bg-secondary">New</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          Importing fetches full CFP details for each selected edition and creates or updates the record.
+        </small>
+        <button type="submit" class="btn btn-info btn-sm">
+          <i class="bi bi-cloud-download me-1"></i>Import Selected
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

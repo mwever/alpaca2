@@ -1,0 +1,6 @@
+{% for msg in messages %}
+<div class="alert alert-{{ msg.level }} alert-dismissible fade show shadow-sm mb-2" role="alert">
+  {{ msg.text }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}

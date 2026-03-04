@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if journal else 'New' }} Journal{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/journals">Journals</a></li>
+    <li class="breadcrumb-item active">{{ 'Edit' if journal else 'New' }}</li>
+  </ol>
+</nav>
+<div class="card" style="max-width:560px">
+  <div class="card-body">
+    <h5 class="fw-bold mb-4">{{ 'Edit Journal' if journal else 'New Journal' }}</h5>
+    <form method="post" action="{{ action }}">
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Name *</label>
+        <input type="text" name="name" class="form-control" required
+               value="{{ journal.name if journal else '' }}">
+      </div>
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label small fw-semibold">Abbreviation</label>
+          <input type="text" name="abbreviation" class="form-control"
+                 value="{{ journal.abbreviation or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold">Rank (Scimago)</label>
+          <select name="rank" class="form-select">
+            <option value="">—</option>
+            {% for r in ranks %}
+            <option value="{{ r }}" {% if journal and journal.rank == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">Impact Factor</label>
+          <input type="number" name="impact_factor" class="form-control" step="0.001"
+                 value="{{ journal.impact_factor or '' }}">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label small fw-semibold">Scimago ID</label>
+          <input type="text" name="scimago_id" class="form-control"
+                 value="{{ journal.scimago_id or '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label small fw-semibold">Website</label>
+          <input type="url" name="website" class="form-control"
+                 value="{{ journal.website or '' }}">
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/journals{% if journal %}/{{ journal.id }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

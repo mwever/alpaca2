@@ -37,13 +37,14 @@
         <p class="text-muted mb-2">{{ paper.description }}</p>
         {% endif %}
         <!-- Resources row -->
+        {%- set resource_urls = paper.resources | map(attribute='url') | select | list %}
         <div class="d-flex flex-wrap gap-1 align-items-center">
-          {% if paper.overleaf_url %}
+          {% if paper.overleaf_url and paper.overleaf_url not in resource_urls %}
           <a href="{{ paper.overleaf_url }}" target="_blank" class="btn btn-sm btn-outline-success" title="Overleaf">
             <i class="bi bi-file-richtext me-1"></i>Overleaf
           </a>
           {% endif %}
-          {% if paper.github_url %}
+          {% if paper.github_url and paper.github_url not in resource_urls %}
           <a href="{{ paper.github_url }}" target="_blank" class="btn btn-sm btn-outline-dark" title="GitHub">
             <i class="bi bi-github me-1"></i>GitHub
           </a>

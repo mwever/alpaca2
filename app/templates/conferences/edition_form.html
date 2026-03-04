@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}New Edition — {{ conference.abbreviation }}{% endblock %}
+{% block title %}{% if edition %}Edit Edition — {{ conference.abbreviation }} {{ edition.year }}{% else %}New Edition — {{ conference.abbreviation }}{% endif %}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb" class="mb-3">
   <ol class="breadcrumb">
     <li class="breadcrumb-item"><a href="/conferences">Conferences</a></li>
     <li class="breadcrumb-item"><a href="/conferences/{{ conference.id }}">{{ conference.abbreviation }}</a></li>
-    <li class="breadcrumb-item active">New Edition</li>
+    <li class="breadcrumb-item active">{% if edition %}Edit {{ edition.year }}{% else %}New Edition{% endif %}</li>
   </ol>
 </nav>
 <div class="card" style="max-width:640px">
   <div class="card-body">
-    <h5 class="fw-bold mb-4">Add Edition — {{ conference.abbreviation }}</h5>
+    <h5 class="fw-bold mb-4">{% if edition %}Edit Edition — {{ conference.abbreviation }} {{ edition.year }}{% else %}Add Edition — {{ conference.abbreviation }}{% endif %}</h5>
     <form method="post" action="{{ action }}">
       <div class="row g-3">
         <div class="col-md-4">

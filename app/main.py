@@ -8,6 +8,7 @@ from app.routers import (
     auth,
     authors,
     affiliations,
+    calendar,
     collaborators,
     conferences,
     dashboard,
@@ -35,6 +36,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ── Routers ──────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
+app.include_router(calendar.router)
 app.include_router(dashboard.router)
 app.include_router(papers.router)
 app.include_router(conferences.router)

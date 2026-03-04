@@ -27,3 +27,6 @@ class User(Base):
     starred_editions: Mapped[list["StarredConferenceEdition"]] = relationship(
         "StarredConferenceEdition", back_populates="user"
     )
+    calendar_events: Mapped[list["PersonalCalendarEvent"]] = relationship(
+        "PersonalCalendarEvent", back_populates="user"
+    )

@@ -43,7 +43,7 @@
                 {% if pa.affiliation and pa.affiliation.color %}
                 <span class="aff-dot" style="background:{{ pa.affiliation.color }}"></span>
                 {% endif %}
-                {{ pa.author.last_name }}{% if not loop.last %},{% endif %}
+                {{ pa.author.full_name }}
               </span>
               {% endfor %}
             </div>

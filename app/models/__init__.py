@@ -15,5 +15,6 @@ from app.models.paper import (  # noqa: F401
     PaperResource,
     TodoItem,
 )
+from app.models.calendar import PersonalCalendarEvent  # noqa: F401
 from app.models.scholar import ScholarAuthorSnapshot, ScholarPaperSnapshot  # noqa: F401
 from app.models.user import User  # noqa: F401

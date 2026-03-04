@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+<style>
+  #calendar { font-size: 0.85rem; }
+  .fc-event { cursor: pointer; }
+  .fc-daygrid-event { white-space: nowrap; overflow: hidden; }
+  .legend-dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-calendar3 me-2"></i>Calendar</h4>
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEventModal">
+    <i class="bi bi-plus-lg me-1"></i>Add Personal Event
+  </button>
+</div>
+
+<!-- Legend -->
+<div class="d-flex flex-wrap gap-3 mb-3 small align-items-center">
+  <span><span class="legend-dot me-1" style="background:#0d6efd"></span>Conference</span>
+  <span><span class="legend-dot me-1" style="background:#dc3545"></span>Paper Deadline</span>
+  <span><span class="legend-dot me-1" style="background:#fd7e14"></span>Abstract Deadline</span>
+  <span><span class="legend-dot me-1" style="background:#ffc107"></span>Rebuttal</span>
+  <span><span class="legend-dot me-1" style="background:#198754"></span>Notification</span>
+  <span><span class="legend-dot me-1" style="background:#6f42c1"></span>Camera Ready</span>
+  <span><span class="legend-dot me-1" style="background:#0dcaf0"></span>Journal SI</span>
+  <span><span class="legend-dot me-1" style="background:#6c757d"></span>Personal</span>
+</div>
+
+<div class="card">
+  <div class="card-body p-3">
+    <div id="calendar"></div>
+  </div>
+</div>
+
+<!-- Personal events list -->
+{% if personal_events %}
+<div class="card mt-4">
+  <div class="card-header fw-semibold small">
+    <i class="bi bi-person-check me-1"></i>My Personal Events
+  </div>
+  <div class="list-group list-group-flush">
+    {% for ev in personal_events %}
+    <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+      <div>
+        <span class="legend-dot me-2" style="background:{{ ev.color or '#6c757d' }}"></span>
+        <strong class="small">{{ ev.title }}</strong>
+        <span class="text-muted small ms-2">
+          {{ ev.start_date }}{% if ev.end_date and ev.end_date != ev.start_date %} – {{ ev.end_date }}{% endif %}
+        </span>
+        {% if ev.description %}
+        <div class="text-muted small ps-4">{{ ev.description }}</div>
+        {% endif %}
+      </div>
+      <form method="post" action="/calendar/events/{{ ev.id }}/delete"
+            onsubmit="return confirm('Delete this event?')">
+        <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-trash"></i></button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Add Personal Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="/calendar/events">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Add Personal Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Title *</label>
+            <input type="text" name="title" id="newEventTitle" class="form-control" required placeholder="Event title">
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col">
+              <label class="form-label small fw-semibold">Start Date *</label>
+              <input type="date" name="start_date" id="newStartDate" class="form-control" required>
+            </div>
+            <div class="col">
+              <label class="form-label small fw-semibold">End Date</label>
+              <input type="date" name="end_date" id="newEndDate" class="form-control">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Color</label>
+            <input type="color" name="color" class="form-control form-control-color" value="#0d6efd">
+          </div>
+          <div class="mb-0">
+            <label class="form-label small fw-semibold">Description</label>
+            <textarea name="description" class="form-control" rows="2" placeholder="Optional notes…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const calendarEl = document.getElementById('calendar');
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,listMonth'
+    },
+    buttonText: { listMonth: 'Agenda' },
+    firstDay: 1,  // Monday
+    events: '/calendar/events.json',
+    eventClick: function (info) {
+      if (info.event.extendedProps.type === 'personal') {
+        info.jsEvent.preventDefault();
+        // Scroll down to the personal events list
+        const list = document.querySelector('.list-group');
+        if (list) list.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (info.event.url) {
+        info.jsEvent.preventDefault();
+        window.open(info.event.url, '_blank');
+      }
+    },
+    dateClick: function (info) {
+      document.getElementById('newStartDate').value = info.dateStr;
+      document.getElementById('newEndDate').value = info.dateStr;
+      document.getElementById('newEventTitle').value = '';
+      new bootstrap.Modal(document.getElementById('addEventModal')).show();
+    },
+    eventDidMount: function (info) {
+      if (info.event.extendedProps.description) {
+        info.el.title = info.event.extendedProps.description;
+      }
+    },
+  });
+  calendar.render();
+});
+</script>
+{% endblock %}

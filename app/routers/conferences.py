@@ -225,6 +225,63 @@ async def create_edition(
     return RedirectResponse(f"/conferences/{conf_id}", 302)
 
 
+@router.get("/{conf_id}/editions/{ed_id}/edit", response_class=HTMLResponse)
+async def edit_edition_form(
+    request: Request, conf_id: int, ed_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not current_user:
+        return RedirectResponse("/login", 302)
+    conf = (await db.execute(select(Conference).where(Conference.id == conf_id))).scalar_one_or_none()
+    edition = (await db.execute(select(ConferenceEdition).where(ConferenceEdition.id == ed_id))).scalar_one_or_none()
+    if not conf or not edition:
+        return RedirectResponse(f"/conferences/{conf_id}", 302)
+    return templates.TemplateResponse(request, "conferences/edition_form.html",
+                                      _ctx(request, current_user, conference=conf, edition=edition,
+                                           action=f"/conferences/{conf_id}/editions/{ed_id}/edit"))
+
+
+@router.post("/{conf_id}/editions/{ed_id}/edit")
+async def update_edition(
+    conf_id: int, ed_id: int,
+    year: int = Form(...),
+    location: str = Form(default=""),
+    start_date: str = Form(default=""),
+    end_date: str = Form(default=""),
+    wikicfp_id: str = Form(default=""),
+    abstract_deadline: str = Form(default=""),
+    full_paper_deadline: str = Form(default=""),
+    rebuttal_start: str = Form(default=""),
+    rebuttal_end: str = Form(default=""),
+    notification_date: str = Form(default=""),
+    camera_ready_deadline: str = Form(default=""),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not current_user:
+        return RedirectResponse("/login", 302)
+    edition = (await db.execute(select(ConferenceEdition).where(ConferenceEdition.id == ed_id))).scalar_one_or_none()
+    if not edition:
+        return RedirectResponse(f"/conferences/{conf_id}", 302)
+
+    def _d(v): return date.fromisoformat(v) if v else None
+
+    edition.year = year
+    edition.location = location or None
+    edition.start_date = _d(start_date)
+    edition.end_date = _d(end_date)
+    edition.wikicfp_id = wikicfp_id or None
+    edition.abstract_deadline = _d(abstract_deadline)
+    edition.full_paper_deadline = _d(full_paper_deadline)
+    edition.rebuttal_start = _d(rebuttal_start)
+    edition.rebuttal_end = _d(rebuttal_end)
+    edition.notification_date = _d(notification_date)
+    edition.camera_ready_deadline = _d(camera_ready_deadline)
+    await db.commit()
+    return RedirectResponse(f"/conferences/{conf_id}", 302)
+
+
 @router.post("/{conf_id}/editions/{ed_id}/delete")
 async def delete_edition(
     conf_id: int, ed_id: int,

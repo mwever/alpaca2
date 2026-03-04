@@ -107,6 +107,10 @@
               <i class="bi bi-star{% if ed.id in starred_ids %}-fill{% endif %}"></i>
             </button>
           </form>
+          <a href="/conferences/{{ conference.id }}/editions/{{ ed.id }}/edit"
+             class="btn btn-sm btn-outline-secondary ms-1" title="Edit">
+            <i class="bi bi-pencil"></i>
+          </a>
           <form method="post" action="/conferences/{{ conference.id }}/editions/{{ ed.id }}/delete"
                 class="d-inline" onsubmit="return confirm('Delete this edition?')">
             <button class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-trash"></i></button>

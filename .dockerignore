@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.github/
+.idea/
+*.zip
+crawl_data/
+scripts/
+static/uploads/

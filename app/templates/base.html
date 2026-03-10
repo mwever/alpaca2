@@ -151,7 +151,7 @@
 
       {% if current_user.author_id %}
       <li class="nav-item">
-        <a class="nav-link {% if active_page == 'collaborators' %}active{% endif %}" href="/authors/{{ current_user.author_id }}">
+        <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/authors/{{ current_user.author_id }}">
           <i class="bi bi-person-badge me-2"></i>My Author Profile
         </a>
       </li>

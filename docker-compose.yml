@@ -1,0 +1,95 @@
+services:
+
+  # ── Traefik reverse proxy ────────────────────────────────────────────────────
+  traefik:
+    image: traefik:v3.3
+    restart: unless-stopped
+    command:
+      # API / dashboard (disable in production if not needed)
+      - "--api.dashboard=false"
+      # Docker provider — only expose containers with explicit label
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=web"
+      # HTTP entrypoint — redirect everything to HTTPS
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      # HTTPS entrypoint
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt via TLS-ALPN-01
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    networks:
+      - web
+
+  # ── MySQL database ────────────────────────────────────────────────────────────
+  db:
+    image: mysql:9.2
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_NAME:-alpaca}"
+      MYSQL_USER: "${DB_USER:-alpaca}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root",
+             "--password=${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Alpaca application ────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: alpaca:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "mysql+aiomysql://${DB_USER:-alpaca}:${DB_PASSWORD}@db:3306/${DB_NAME:-alpaca}"
+      SECRET_KEY: "${SECRET_KEY}"
+      DEBUG: "false"
+    volumes:
+      # Persist user uploads across container restarts/rebuilds
+      - uploads:/app/static/uploads
+    networks:
+      - web
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      # HTTPS router
+      - "traefik.http.routers.alpaca.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.alpaca.entrypoints=websecure"
+      - "traefik.http.routers.alpaca.tls=true"
+      - "traefik.http.routers.alpaca.tls.certresolver=letsencrypt"
+      # Backend port
+      - "traefik.http.services.alpaca.loadbalancer.server.port=8000"
+
+volumes:
+  db_data:
+  uploads:
+  letsencrypt:
+
+networks:
+  web:
+    external: false
+  internal:
+    external: false

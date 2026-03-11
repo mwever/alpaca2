@@ -8,12 +8,41 @@
    the selectors below will always match. Using html[...] gives specificity
    0,1,1 which reliably beats Bootstrap's :root vars (0,1,0). */
 html[data-alpaca-theme="light"] {
-  --alpaca-sidebar-bg:       #1d3a6e;
-  --alpaca-body-bg:          #f5f6fa;
+  /* ── Layout chrome ── */
+  --alpaca-sidebar-bg:       #2C3E70;  /* Primary — Deep Indigo */
+  --alpaca-body-bg:          #F8F9FB;
   --alpaca-deadlines-bg:     #ffffff;
-  --alpaca-deadlines-border: #dee2e6;
+  --alpaca-deadlines-border: #dde1ea;
 
-  --bs-body-bg:              #f5f6fa;
+  /* ── Bootstrap base ── */
+  --bs-body-bg:              #F8F9FB;
+  --bs-body-color:           #1E1E1E;
+  --bs-secondary-bg:         #eef0f5;
+  --bs-tertiary-bg:          #e5e8ef;
+  --bs-border-color:         #dde1ea;
+
+  /* ── Primary → Deep Indigo #2C3E70 ── */
+  --bs-primary:              #2C3E70;
+  --bs-primary-rgb:          44, 62, 112;
+  --bs-primary-bg-subtle:    #eaecf4;
+  --bs-primary-border-subtle: #b8c1d8;
+  --bs-primary-text-emphasis: #1a2542;
+  --bs-link-color:           #2C3E70;
+  --bs-link-hover-color:     #1e2b50;
+
+  /* ── Info → Teal #2CB1BC (AI / intelligence) ── */
+  --bs-info:                 #2CB1BC;
+  --bs-info-rgb:             44, 177, 188;
+  --bs-info-bg-subtle:       #d6f3f5;
+  --bs-info-border-subtle:   #93d8dc;
+  --bs-info-text-emphasis:   #1a6b72;
+
+  /* ── Warning → Gold #F4C542 (accent / lux) ── */
+  --bs-warning:              #F4C542;
+  --bs-warning-rgb:          244, 197, 66;
+  --bs-warning-bg-subtle:    #fef8d9;
+  --bs-warning-border-subtle: #f9e08a;
+  --bs-warning-text-emphasis: #8a6e1e;
 }
 
 /* ── Dark ──────────────────────────────────────────────────────────────── */

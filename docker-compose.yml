@@ -4,8 +4,6 @@ services:
   traefik:
     image: traefik:v3.6.10
     restart: unless-stopped
-    depends_on:
-      - socket-proxy
     command:
       # API / dashboard (disable in production if not needed)
       - "--api.dashboard=false"

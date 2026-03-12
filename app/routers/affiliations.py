@@ -55,11 +55,13 @@ async def list_affiliations(
     items = (
         await db.execute(stmt.order_by(Affiliation.name).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE))
     ).scalars().all()
+    query_params = {"q": q} if q else {}
     return templates.TemplateResponse(
         request,
         "affiliations/list.html",
         _ctx(request, current_user, affiliations=items, total=total, page=page,
-             total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q),
+             total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q,
+             query_params=query_params),
     )
 
 

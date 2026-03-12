@@ -39,10 +39,12 @@ async def list_journals(
     items = (await db.execute(
         stmt.order_by(Journal.name).offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
     )).scalars().all()
+    query_params = {k: v for k, v in {"q": q, "rank": rank}.items() if v}
     return templates.TemplateResponse(
         request, "journals/list.html",
         _ctx(request, current_user, journals=items, total=total, page=page,
-             total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q, rank=rank),
+             total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q, rank=rank,
+             query_params=query_params),
     )
 
 

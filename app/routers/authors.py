@@ -106,10 +106,12 @@ async def list_authors(
                 or pa.paper_id in joint_paper_ids
             )
 
+    query_params = {"q": q} if q else {}
     return templates.TemplateResponse(
         request, "authors/list.html",
         _ctx(request, current_user, authors=items, total=total, page=page,
              total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q,
+             query_params=query_params,
              visible_paper_counts=visible_paper_counts),
     )
 

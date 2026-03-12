@@ -94,11 +94,12 @@ async def list_conferences(
             .where(StarredConferenceEdition.user_id == current_user.id)
         )
         starred_ids = {row[0] for row in sr.all()}
+    query_params = {k: v for k, v in {"q": q, "rank": rank}.items() if v}
     return templates.TemplateResponse(
         request, "conferences/list.html",
         _ctx(request, current_user, conferences=items, total=total, page=page,
              total_pages=(total + PAGE_SIZE - 1) // PAGE_SIZE, q=q, rank=rank,
-             starred_ids=starred_ids),
+             query_params=query_params, starred_ids=starred_ids),
     )
 
 

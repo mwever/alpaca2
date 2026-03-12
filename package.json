@@ -1,0 +1,13 @@
+{
+  "name": "alpaca",
+  "private": true,
+  "description": "Frontend dependency management for Alpaca",
+  "dependencies": {
+    "bootstrap": "5.3.3",
+    "bootstrap-icons": "1.11.3",
+    "htmx.org": "2.0.4"
+  },
+  "scripts": {
+    "build": "node scripts/copy-assets.js"
+  }
+}

@@ -25,7 +25,9 @@ class Author(Base):
     author_affiliations: Mapped[list["AuthorAffiliation"]] = relationship(
         "AuthorAffiliation", back_populates="author", cascade="all, delete-orphan"
     )
-    paper_authors: Mapped[list["PaperAuthor"]] = relationship("PaperAuthor", back_populates="author")
+    paper_authors: Mapped[list["PaperAuthor"]] = relationship(
+        "PaperAuthor", back_populates="author", cascade="all, delete-orphan"
+    )
     user: Mapped[Optional["User"]] = relationship(
         "User", back_populates="author", foreign_keys="User.author_id", uselist=False
     )
@@ -33,7 +35,7 @@ class Author(Base):
         "ScholarAuthorSnapshot", back_populates="author", cascade="all, delete-orphan"
     )
     claim_requests: Mapped[list["AuthorClaimRequest"]] = relationship(
-        "AuthorClaimRequest", back_populates="author"
+        "AuthorClaimRequest", back_populates="author", passive_deletes=True
     )
 
     @property

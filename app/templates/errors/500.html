@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}500 Server Error{% endblock %}
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center py-5 text-center" style="min-height: 60vh">
+  <i class="bi bi-exclamation-triangle display-1 text-danger opacity-50 mb-4"></i>
+  <h1 class="fw-bold mb-2">{{ status_code or 500 }}</h1>
+  <h4 class="text-muted mb-3">Something Went Wrong</h4>
+  <p class="text-muted mb-4" style="max-width: 420px">
+    An unexpected error occurred on our end. The issue has been logged and we'll look into it.
+  </p>
+  <div class="d-flex gap-2">
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Go Back
+    </a>
+    {% if current_user %}
+    <a href="/" class="btn btn-primary">
+      <i class="bi bi-house me-1"></i>Dashboard
+    </a>
+    {% if current_user.is_admin %}
+    <a href="/admin/errors" class="btn btn-outline-danger">
+      <i class="bi bi-bug me-1"></i>View Error Log
+    </a>
+    {% endif %}
+    {% else %}
+    <a href="/login" class="btn btn-primary">
+      <i class="bi bi-box-arrow-in-right me-1"></i>Login
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

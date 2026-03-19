@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Error Log{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold"><i class="bi bi-bug me-2"></i>Error Log</h4>
+  <div class="d-flex gap-2 align-items-center">
+    <span class="text-muted small">{{ total }} total</span>
+    <form method="post" action="/admin/errors/clear"
+          onsubmit="return confirm('Clear all error log entries?')">
+      <button class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-trash me-1"></i>Clear All
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" action="/admin/errors" class="d-flex gap-2 align-items-center flex-wrap">
+      <label class="form-label mb-0 small text-muted">Filter by status:</label>
+      <select name="status" class="form-select form-select-sm" style="width: auto"
+              onchange="this.form.submit()">
+        <option value="" {% if not status_filter %}selected{% endif %}>All</option>
+        <option value="400" {% if status_filter == '400' %}selected{% endif %}>400 Bad Request</option>
+        <option value="403" {% if status_filter == '403' %}selected{% endif %}>403 Forbidden</option>
+        <option value="404" {% if status_filter == '404' %}selected{% endif %}>404 Not Found</option>
+        <option value="422" {% if status_filter == '422' %}selected{% endif %}>422 Validation Error</option>
+        <option value="500" {% if status_filter == '500' %}selected{% endif %}>500 Server Error</option>
+      </select>
+    </form>
+  </div>
+</div>
+
+{% if errors %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 160px">When</th>
+          <th style="width: 60px">Status</th>
+          <th style="width: 60px">Method</th>
+          <th>Path</th>
+          <th>Exception</th>
+          <th>User</th>
+          <th style="width: 40px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for err in errors %}
+        <tr>
+          <td class="small text-muted" title="{{ err.occurred_at.isoformat() }}">
+            {{ err.occurred_at.strftime('%Y-%m-%d %H:%M:%S') }}
+          </td>
+          <td>
+            {% if err.status_code >= 500 %}
+            <span class="badge bg-danger">{{ err.status_code }}</span>
+            {% elif err.status_code >= 400 %}
+            <span class="badge bg-warning text-dark">{{ err.status_code }}</span>
+            {% else %}
+            <span class="badge bg-secondary">{{ err.status_code }}</span>
+            {% endif %}
+          </td>
+          <td><code class="small">{{ err.method }}</code></td>
+          <td class="small">
+            <code>{{ err.path }}{% if err.query_string %}?{{ err.query_string }}{% endif %}</code>
+          </td>
+          <td class="small">
+            {% if err.exception_type %}
+            <span class="text-danger fw-semibold">{{ err.exception_type }}</span>
+            {% if err.message %}
+            <br><span class="text-muted" title="{{ err.message }}">{{ err.message[:80] }}{% if err.message|length > 80 %}…{% endif %}</span>
+            {% endif %}
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="small">
+            {% if err.user %}
+            <a href="/admin/users/{{ err.user.id }}/edit">{{ err.user.username }}</a>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if err.traceback %}
+            <button class="btn btn-sm btn-outline-secondary py-0"
+                    data-bs-toggle="modal" data-bs-target="#tracebackModal{{ err.id }}"
+                    title="View traceback">
+              <i class="bi bi-code-slash"></i>
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination pagination-sm justify-content-center">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="?page={{ page - 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+    {% for p in range(1, total_pages + 1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="?page={{ p }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ p }}</a>
+    </li>
+    {% endfor %}
+    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+      <a class="page-link" href="?page={{ page + 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+<!-- Traceback modals -->
+{% for err in errors %}
+{% if err.traceback %}
+<div class="modal fade" id="tracebackModal{{ err.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-semibold">
+          <span class="badge bg-danger me-2">{{ err.status_code }}</span>
+          {{ err.exception_type or 'Error' }} — {{ err.method }} {{ err.path }}
+          <small class="text-muted fw-normal ms-2">{{ err.occurred_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if err.message %}
+        <div class="alert alert-danger py-2 small mb-3">{{ err.message }}</div>
+        {% endif %}
+        <pre class="bg-body-tertiary rounded p-3 small" style="white-space: pre-wrap; word-break: break-all; max-height: 60vh; overflow-y: auto;">{{ err.traceback }}</pre>
+        {% if err.user_agent %}
+        <p class="text-muted small mt-2 mb-0"><i class="bi bi-browser-chrome me-1"></i>{{ err.user_agent }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% else %}
+<div class="card">
+  <div class="card-body text-center text-muted py-5">
+    <i class="bi bi-check-circle display-4 text-success opacity-50 d-block mb-3"></i>
+    No errors logged{% if status_filter %} for status {{ status_filter }}{% endif %}.
+  </div>
+</div>
+{% endif %}
+{% endblock %}

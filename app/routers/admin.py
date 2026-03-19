@@ -1,5 +1,5 @@
 import bcrypt
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -12,6 +12,7 @@ from app.database import get_db
 from app.dependencies import require_admin, require_moderator
 from app.feature_flags import KNOWN_FEATURES, populate_cache
 from app.models.author import Author
+from app.models.error_log import ErrorLog
 from app.models.feature_flag import FeatureFlag, UserFeatureAccess
 from app.models.claim import AuthorClaimRequest, ClaimStatus
 from app.models.conference import Conference, ConferenceEdition
@@ -59,6 +60,10 @@ async def admin_index(
         "pending_suggestions": (await db.execute(
             select(func.count(Suggestion.id))
             .where(Suggestion.status == SuggestionStatus.pending)
+        )).scalar_one(),
+        "recent_errors": (await db.execute(
+            select(func.count(ErrorLog.id))
+            .where(ErrorLog.occurred_at >= datetime.now(timezone.utc) - timedelta(hours=24))
         )).scalar_one(),
     }
     # Recent users
@@ -432,3 +437,52 @@ async def remove_feature_user(
         await db.commit()
         await populate_cache(db)
     return RedirectResponse(f"/admin/features#{key}", 302)
+
+
+# ── Error Log ─────────────────────────────────────────────────────────────────
+
+@router.get("/errors", response_class=HTMLResponse)
+async def list_errors(
+    request: Request,
+    page: int = 1,
+    status: str = "",
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    query = select(ErrorLog).options(selectinload(ErrorLog.user))
+    count_query = select(func.count(ErrorLog.id))
+    if status:
+        try:
+            code = int(status)
+            query = query.where(ErrorLog.status_code == code)
+            count_query = count_query.where(ErrorLog.status_code == code)
+        except ValueError:
+            pass
+
+    total = (await db.execute(count_query)).scalar_one()
+    errors = (await db.execute(
+        query.order_by(ErrorLog.occurred_at.desc()).offset(offset).limit(per_page)
+    )).scalars().all()
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    return templates.TemplateResponse(
+        request, "admin/error_log.html",
+        _ctx(request, current_user,
+             errors=errors, total=total, page=page, total_pages=total_pages,
+             status_filter=status),
+    )
+
+
+@router.post("/errors/clear")
+async def clear_errors(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    await db.execute(select(ErrorLog).execution_options(synchronize_session=False))
+    from sqlalchemy import delete
+    await db.execute(delete(ErrorLog))
+    await db.commit()
+    return RedirectResponse("/admin/errors", 302)

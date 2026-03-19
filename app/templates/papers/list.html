@@ -166,6 +166,26 @@
 </div>
 
 <script>
+// ── Remember last active tab ──────────────────────────────────────────────
+(function () {
+  const KEY = 'alpaca-papers-tab';
+  const params = new URLSearchParams(location.search);
+
+  // If arriving with no filter params, redirect to the last visited tab
+  if (!params.has('status') && !params.has('q') && !params.has('page')) {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+      location.replace('/papers?status=' + encodeURIComponent(saved));
+      return;
+    }
+  }
+
+  // Save whatever tab is active now (empty string means "All")
+  localStorage.setItem(KEY, params.get('status') || '');
+})();
+</script>
+
+<script>
 (function () {
   const bar       = document.getElementById('bulk-bar');
   const countEl   = document.getElementById('bulk-count');

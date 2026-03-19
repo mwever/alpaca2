@@ -40,3 +40,4 @@ from app.models.supervision import (  # noqa: F401
     SupervisionTodo,
     SupervisionTypeWorkflowConfig,
 )
+from app.models.error_log import ErrorLog  # noqa: F401

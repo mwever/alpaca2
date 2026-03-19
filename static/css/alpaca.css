@@ -49,16 +49,33 @@ body {
 #deadlines-sidebar {
   width: var(--deadlines-width);
   min-width: var(--deadlines-width);
+  flex-shrink: 0;
   background: var(--alpaca-deadlines-bg);
   border-left: 1px solid var(--alpaca-deadlines-border);
   padding: 1rem;
   overflow-y: auto;
   max-height: calc(100vh - 56px);
+  transition: width 0.25s ease, min-width 0.25s ease, padding 0.25s ease,
+              border-left-width 0.25s ease, opacity 0.25s ease;
+}
+
+#deadlines-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border-left-width: 0;
+  overflow: hidden;
+  opacity: 0;
 }
 
 /* ── Navbar ── */
 .navbar {
   background: var(--alpaca-sidebar-bg) !important;
+}
+
+/* ── Nav tabs — active tab bottom border must match the page background ── */
+.nav-tabs .nav-link.active {
+  border-bottom-color: var(--bs-body-bg);
 }
 
 /* ── Cards ── */

@@ -145,6 +145,26 @@
   </div>
 </div>
 
+<!-- Error log shortcut -->
+<div class="card mb-4 {% if stats.recent_errors > 0 %}border-danger{% endif %}">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold small">
+      <i class="bi bi-bug me-1"></i>Error Log
+      {% if stats.recent_errors > 0 %}
+      <span class="badge bg-danger ms-1">{{ stats.recent_errors }} new</span>
+      {% endif %}
+    </span>
+    <a href="/admin/errors" class="btn btn-sm btn-outline-{% if stats.recent_errors > 0 %}danger{% else %}secondary{% endif %} py-0">View All</a>
+  </div>
+  <div class="card-body py-2">
+    {% if stats.recent_errors > 0 %}
+    <p class="text-danger small mb-0">{{ stats.recent_errors }} error{{ 's' if stats.recent_errors != 1 }} logged in the last 24 hours.</p>
+    {% else %}
+    <p class="text-muted small mb-0">No errors in the last 24 hours.</p>
+    {% endif %}
+  </div>
+</div>
+
 <!-- Feature flags shortcut -->
 <div class="card mb-4">
   <div class="card-header d-flex justify-content-between align-items-center">

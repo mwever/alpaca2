@@ -75,11 +75,22 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
-      # HTTPS router
+      # Middlewares
+      - "traefik.http.middlewares.alpaca-compress.compress=true"
+      - "traefik.http.middlewares.alpaca-static-cache.headers.customresponseheaders.Cache-Control=public, max-age=86400"
+      # HTTPS router (HTML / app traffic) — gzip compression
       - "traefik.http.routers.alpaca.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.alpaca.entrypoints=websecure"
       - "traefik.http.routers.alpaca.tls=true"
       - "traefik.http.routers.alpaca.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.alpaca.middlewares=alpaca-compress"
+      # Static assets router — compression + cache headers, higher priority
+      - "traefik.http.routers.alpaca-static.rule=Host(`${DOMAIN}`) && PathPrefix(`/static`)"
+      - "traefik.http.routers.alpaca-static.entrypoints=websecure"
+      - "traefik.http.routers.alpaca-static.tls=true"
+      - "traefik.http.routers.alpaca-static.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.alpaca-static.middlewares=alpaca-compress,alpaca-static-cache"
+      - "traefik.http.routers.alpaca-static.priority=100"
       # Backend port
       - "traefik.http.services.alpaca.loadbalancer.server.port=8000"
 

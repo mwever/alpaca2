@@ -44,4 +44,4 @@ EXPOSE 8000
 
 # Run migrations then start the app.
 # DATABASE_URL, SECRET_KEY etc. are injected at runtime via env / .env file.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"]

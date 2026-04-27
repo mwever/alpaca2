@@ -9,6 +9,8 @@ from app.feature_flags import user_has_feature
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
+_UNSET = object()
+
 
 async def get_current_user(
     request: Request,
@@ -17,11 +19,18 @@ async def get_current_user(
     """Return the logged-in User or None."""
     from app.models.user import User
 
+    cached = getattr(request.state, "current_user", _UNSET)
+    if cached is not _UNSET:
+        return cached
+
     user_id = request.session.get("user_id")
     if not user_id:
+        request.state.current_user = None
         return None
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    request.state.current_user = user
+    return user
 
 
 async def require_user(

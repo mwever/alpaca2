@@ -8,6 +8,8 @@ engine = create_async_engine(
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=3600,
+    pool_size=25,
+    max_overflow=25,
 )
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
